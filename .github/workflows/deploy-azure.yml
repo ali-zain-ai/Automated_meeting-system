@@ -1,0 +1,34 @@
+name: Deploy Backend to Azure Container Apps
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-azure.yml'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Build and push image to ACR
+        run: |
+          az acr login --name ${{ secrets.ACR_NAME }}
+          docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/backend:${{ github.sha }} ./backend
+          docker push ${{ secrets.ACR_NAME }}.azurecr.io/backend:${{ github.sha }}
+
+      - name: Deploy to Azure Container Apps
+        run: |
+          az containerapp update \
+            --name meeting-backend \
+            --resource-group rg-meeting-system \
+            --image ${{ secrets.ACR_NAME }}.azurecr.io/backend:${{ github.sha }}
