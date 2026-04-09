@@ -1,0 +1,60 @@
+/* ============================================================
+   Admin Login Styles — Premium Light Theme
+   ============================================================ */
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg);
+  padding: 24px;
+}
+
+.loginCard {
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 32px;
+}
+
+.logo svg {
+  color: var(--color-primary);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 24px;
+  margin-bottom: 24px;
+}
+
+.errorBanner {
+  background: var(--color-error-bg);
+  color: var(--color-error);
+  padding: 12px;
+  border-radius: var(--radius-md);
+  margin-bottom: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.form {
+  text-align: left;
+}
+
+.submitBtn {
+  width: 100%;
+  margin-top: 12px;
+}
