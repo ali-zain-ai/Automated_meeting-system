@@ -154,3 +154,35 @@ async def delete_zoom_meeting(meeting_id: str) -> bool:
     except Exception:
         # Best-effort deletion — don't fail the cancel flow
         return False
+
+
+async def end_zoom_meeting(meeting_id: str) -> bool:
+    """
+    Forcefully end an ongoing Zoom meeting.
+    This kicks all participants out immediately.
+    """
+    settings = get_settings()
+
+    if settings.zoom_client_id == "placeholder":
+        return True
+
+    if not meeting_id or meeting_id.startswith("mock-"):
+        return True
+
+    try:
+        token = await _get_access_token()
+
+        async with httpx.AsyncClient() as client:
+            response = await client.put(
+                f"https://api.zoom.us/v2/meetings/{meeting_id}/status",
+                json={"action": "end"},
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json"
+                },
+            )
+            # 204 No Content means success
+            return response.status_code == 204
+    except Exception as e:
+        print(f"[ZOOM] Error ending meeting {meeting_id}: {e}")
+        return False

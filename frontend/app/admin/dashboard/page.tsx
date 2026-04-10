@@ -14,6 +14,7 @@ import {
   BookingDetail,
   SettingsResponse,
   AvailabilityRecord,
+  syncZoomMeetings,
 } from '@/lib/api';
 import {
   Sparkles,
@@ -84,6 +85,9 @@ export default function AdminDashboard() {
         if (!record.is_available) blocked.add(record.date);
       });
       setBlockedDates(blocked);
+      
+      // Auto-sync zoom statuses to end expired meetings
+      await syncZoomMeetings(authToken);
       
     } catch (e: unknown) {
       if (e instanceof Error && (e.message.includes('Not authorized') || e.message.includes('token'))) {
@@ -307,7 +311,7 @@ export default function AdminDashboard() {
                             </span>
                           </td>
                           <td className={styles.actionCell}>
-                            {book.status === 'scheduled' && !isPast && book.zoom_link && (
+                            {book.status === 'scheduled' && new Date(book.end_time) > new Date() && book.zoom_link && (
                               <a 
                                 href={book.zoom_link} 
                                 target="_blank" 
@@ -372,7 +376,7 @@ export default function AdminDashboard() {
                   <div className={styles.settingsDesc}>Turn all bookings on or off globally</div>
                 </div>
                 <button 
-                  className={`toggle ${isBookingEnabled ? 'active' : ''}`}
+                  className={`${styles.toggle} ${isBookingEnabled ? styles.active : ''}`}
                   onClick={() => setIsBookingEnabled(!isBookingEnabled)}
                 />
               </div>

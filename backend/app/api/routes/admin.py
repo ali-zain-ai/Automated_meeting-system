@@ -17,7 +17,7 @@ from app.models.schemas import (
 from app.db.supabase_client import supabase
 from app.config import get_settings as get_app_settings, TZ_PKT
 from app.services.availability import set_date_availability
-from app.services.zoom import delete_zoom_meeting
+from app.services.zoom import delete_zoom_meeting, end_zoom_meeting
 from app.services.email import send_cancellation_email
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
@@ -269,6 +269,50 @@ async def bulk_cancel_bookings(
         "cancelled_count": len(bookings_to_cancel),
         "emails_sent": emails_sent,
         "message": f"Successfully cancelled {len(bookings_to_cancel)} meetings and sent {emails_sent} emails."
+    }
+
+
+@router.post("/sync-zoom-statuses")
+async def sync_zoom_statuses(
+    _: dict = Depends(_verify_token),
+):
+    """
+    Check all scheduled meetings. 
+    If they have passed their end_time, end the Zoom meeting and set status to completed.
+    """
+    now_utc = datetime.utcnow().isoformat()
+    
+    # Find scheduled bookings that have expired
+    result = (
+        supabase.table("bookings")
+        .select("*")
+        .eq("status", "scheduled")
+        .lt("end_time", now_utc)
+        .execute()
+    )
+
+    if not result.data or len(result.data) == 0:
+        return {"processed": 0, "ended_on_zoom": 0, "message": "No expired meetings to sync."}
+
+    expired_bookings = result.data
+    ended_count = 0
+    
+    for booking in expired_bookings:
+        # Call Zoom to end the meeting
+        if booking.get("zoom_meeting_id"):
+            success = await end_zoom_meeting(booking["zoom_meeting_id"])
+            if success:
+                ended_count += 1
+        
+        # Update status to completed in DB
+        supabase.table("bookings").update(
+            {"status": "completed"}
+        ).eq("id", booking["id"]).execute()
+
+    return {
+        "processed": len(expired_bookings),
+        "ended_on_zoom": ended_count,
+        "message": f"Successfully processed {len(expired_bookings)} expired meetings. {ended_count} ended on Zoom."
     }
 
 # ─── Availability Management ─────────────────────────────

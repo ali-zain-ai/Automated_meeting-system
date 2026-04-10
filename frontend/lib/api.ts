@@ -217,3 +217,12 @@ export async function updateAdminSettings(
     body: JSON.stringify(data),
   });
 }
+
+export async function syncZoomMeetings(
+  token: string
+): Promise<{ processed: number; ended_on_zoom: number; message: string }> {
+  return apiFetch('/admin/sync-zoom-statuses', {
+    method: 'POST',
+    headers: authHeaders(token),
+  });
+}
