@@ -237,28 +237,28 @@ def _build_cancellation_html(name: str, booking_type: str, start_time: str) -> s
     </html>
     """
 
+import resend
+
 def _send_email_sync(to_email: str, subject: str, html_content: str) -> bool:
-    """Synchronous core for sending SMTP email via Gmail."""
+    """Synchronous core for sending email via Resend API."""
     settings = get_settings()
     
-    if settings.gmail_user == "placeholder@gmail.com":
+    if settings.resend_api_key == "re_placeholder_key":
         print(f"[MOCK EMAIL] To: {to_email} | Subject: {subject}")
         return True
 
-    msg = MIMEMultipart()
-    msg['From'] = f"MindFuelByAli <{settings.gmail_user}>"
-    msg['To'] = to_email
-    msg['Subject'] = subject
-    
-    msg.attach(MIMEText(html_content, 'html'))
+    resend.api_key = settings.resend_api_key
 
     try:
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
-            server.login(settings.gmail_user, settings.gmail_app_password)
-            server.send_message(msg)
+        resend.Emails.send({
+            "from": settings.resend_from_email,
+            "to": to_email,
+            "subject": subject,
+            "html": html_content
+        })
         return True
     except Exception as e:
-        print(f"[SMTP ERROR] {e}")
+        print(f"[RESEND ERROR] {e}")
         return False
 
 async def send_booking_confirmation(
