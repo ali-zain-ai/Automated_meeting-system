@@ -21,7 +21,6 @@ class Settings(BaseSettings):
     # Email (Gmail SMTP)
     gmail_user: str = "placeholder@gmail.com"
     gmail_app_password: str = "placeholder-pass"
-    resend_from_email: str = "noreply@mindfuelbyali.com"
 
     # Admin
     admin_email: str = "admin@mindfuelbyali.com"
