@@ -281,60 +281,65 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {bookings.map(book => (
-                      <tr key={book.id}>
-                        <td className={styles.userCell}>
-                          <strong>{book.user_name}</strong>
-                          <span>{book.user_email}</span>
-                        </td>
-                        <td>
-                          <strong>{formatTimePKT(book.start_time)}</strong>
-                          <br />
-                          <span style={{ fontSize: '13px', color: 'var(--color-primary)' }}>
-                            {getDurationLabel(book.duration)}
-                          </span>
-                        </td>
-                        <td className={styles.topicCell}>
-                          <p>{book.topic}</p>
-                        </td>
-                        <td>
-                          <span className={`badge badge-${book.status}`}>
-                            {book.status}
-                          </span>
-                        </td>
-                        <td className={styles.actionCell}>
-                          {book.status === 'scheduled' && book.zoom_link && (
-                            <a 
-                              href={book.zoom_link} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="btn btn-sm btn-accent"
-                              title="Join Zoom Meeting"
-                            >
-                              <Video size={14} /> Join
-                            </a>
-                          )}
-                          {book.status === 'scheduled' && (
+                    {bookings.map(book => {
+                      const isPast = book.status === 'scheduled' && new Date(book.start_time) < new Date();
+                      const status = isPast ? 'completed' : book.status;
+                      
+                      return (
+                        <tr key={book.id} className={isPast ? styles.pastRow : ''}>
+                          <td className={styles.userCell}>
+                            <strong>{book.user_name}</strong>
+                            <span>{book.user_email}</span>
+                          </td>
+                          <td>
+                            <strong>{formatTimePKT(book.start_time)}</strong>
+                            <br />
+                            <span style={{ fontSize: '13px', color: 'var(--color-primary)' }}>
+                              {getDurationLabel(book.duration)}
+                            </span>
+                          </td>
+                          <td className={styles.topicCell}>
+                            <p>{book.topic}</p>
+                          </td>
+                          <td>
+                            <span className={`badge badge-${status}`}>
+                              {status}
+                            </span>
+                          </td>
+                          <td className={styles.actionCell}>
+                            {book.status === 'scheduled' && !isPast && book.zoom_link && (
+                              <a 
+                                href={book.zoom_link} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="btn btn-sm btn-accent"
+                                title="Join Zoom Meeting"
+                              >
+                                <Video size={14} /> Join
+                              </a>
+                            )}
+                            {book.status === 'scheduled' && (
+                              <button 
+                                className="btn btn-sm btn-ghost" 
+                                style={{ color: 'var(--color-error)' }}
+                                onClick={() => handleCancelBooking(book.id)}
+                                title="Cancel Meeting"
+                              >
+                                <XCircle size={16} />
+                              </button>
+                            )}
                             <button 
                               className="btn btn-sm btn-ghost" 
-                              style={{ color: 'var(--color-error)' }}
-                              onClick={() => handleCancelBooking(book.id)}
-                              title="Cancel Meeting"
+                              style={{ color: '#94a3b8' }}
+                              onClick={() => handlePermanentDelete(book.id)}
+                              title="Delete Permanently"
                             >
-                              <XCircle size={16} />
+                              <Trash2 size={16} />
                             </button>
-                          )}
-                          <button 
-                            className="btn btn-sm btn-ghost" 
-                            style={{ color: '#94a3b8' }}
-                            onClick={() => handlePermanentDelete(book.id)}
-                            title="Delete Permanently"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               ) : (

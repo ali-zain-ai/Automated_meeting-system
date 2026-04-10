@@ -149,6 +149,20 @@
   gap: 8px;
   align-items: center;
 }
+  
+.pastRow {
+  opacity: 0.65;
+  background: rgba(248, 250, 252, 0.5);
+  transition: opacity 0.3s ease;
+}
+
+.pastRow:hover {
+  opacity: 1;
+}
+
+.pastRow td {
+  filter: grayscale(0.5);
+}
 
 .emptyState {
   text-align: center;
