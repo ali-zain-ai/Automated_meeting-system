@@ -1,5 +1,8 @@
 import smtplib
 import asyncio
+import uuid
+import time as time_module
+from email.utils import formatdate, make_msgid
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from app.config import get_settings, TZ_PKT
@@ -238,7 +241,7 @@ def _build_cancellation_html(name: str, booking_type: str, start_time: str) -> s
     """
 
 def _send_email_sync(to_email: str, subject: str, html_content: str) -> bool:
-    """Synchronous core for sending SMTP email via Gmail (Port 587 + STARTTLS)."""
+    """Synchronous core for sending SMTP email via Gmail with advanced anti-spam headers."""
     settings = get_settings()
     
     if settings.gmail_user == "placeholder@gmail.com":
@@ -246,16 +249,35 @@ def _send_email_sync(to_email: str, subject: str, html_content: str) -> bool:
         return True
 
     msg = MIMEMultipart()
+    
+    # 1. Basic Headers
     msg['From'] = f"{settings.app_name} <{settings.gmail_user}>"
     msg['To'] = to_email
     msg['Subject'] = subject
+    msg['Reply-To'] = settings.gmail_user
+    
+    # 2. Advanced Anti-Spam Headers (The "Band-Aid")
+    # Date header is essential for proving the email was sent recently
+    msg['Date'] = formatdate(localtime=True)
+    
+    # Unique Message-ID reduces "spoofing" suspicion
+    msg['Message-ID'] = make_msgid(domain="gmail.com")
+    
+    # Tells filters this is a system-generated transactional email, not bulk marketing
+    msg['Auto-Submitted'] = 'auto-generated'
+    
+    # Suppression of automatic responses (prevents loops)
+    msg['X-Auto-Response-Suppress'] = 'All'
+    
+    # Precedence bulk can help, but for small volumes 'transactional' patterns are better
+    msg['X-Priority'] = '1 (Highest)'
     
     msg.attach(MIMEText(html_content, 'html'))
 
     try:
-        # Port 587 with STARTTLS is more reliable as it's less likely to be blocked than 465
-        with smtplib.SMTP('smtp.gmail.com', 587, timeout=10) as server:
-            server.set_debuglevel(0) # Set to 1 for verbose logs in Vercel
+        # Port 587 with STARTTLS is the recommended standard for cloud-to-gmail relay
+        with smtplib.SMTP('smtp.gmail.com', 587, timeout=15) as server:
+            server.set_debuglevel(0)
             server.starttls()
             server.login(settings.gmail_user, settings.gmail_app_password)
             server.send_message(msg)
