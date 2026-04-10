@@ -13,9 +13,6 @@ class Settings(BaseSettings):
     supabase_url: str = "https://placeholder.supabase.co"
     supabase_service_role_key: str = "placeholder-key"
 
-    # Resend API
-    resend_api_key: str = "re_placeholder_key"
-
     # Zoom Server-to-Server OAuth
     zoom_account_id: str = "placeholder"
     zoom_client_id: str = "placeholder"

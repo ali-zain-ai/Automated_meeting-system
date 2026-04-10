@@ -237,28 +237,31 @@ def _build_cancellation_html(name: str, booking_type: str, start_time: str) -> s
     </html>
     """
 
-import resend
-
 def _send_email_sync(to_email: str, subject: str, html_content: str) -> bool:
-    """Synchronous core for sending email via Resend API."""
+    """Synchronous core for sending SMTP email via Gmail (Port 587 + STARTTLS)."""
     settings = get_settings()
     
-    if settings.resend_api_key == "re_placeholder_key":
+    if settings.gmail_user == "placeholder@gmail.com":
         print(f"[MOCK EMAIL] To: {to_email} | Subject: {subject}")
         return True
 
-    resend.api_key = settings.resend_api_key
+    msg = MIMEMultipart()
+    msg['From'] = f"{settings.app_name} <{settings.gmail_user}>"
+    msg['To'] = to_email
+    msg['Subject'] = subject
+    
+    msg.attach(MIMEText(html_content, 'html'))
 
     try:
-        resend.Emails.send({
-            "from": settings.resend_from_email,
-            "to": to_email,
-            "subject": subject,
-            "html": html_content
-        })
+        # Port 587 with STARTTLS is more reliable as it's less likely to be blocked than 465
+        with smtplib.SMTP('smtp.gmail.com', 587, timeout=10) as server:
+            server.set_debuglevel(0) # Set to 1 for verbose logs in Vercel
+            server.starttls()
+            server.login(settings.gmail_user, settings.gmail_app_password)
+            server.send_message(msg)
         return True
     except Exception as e:
-        print(f"[RESEND ERROR] {e}")
+        print(f"[SMTP ERROR] Failed to send email to {to_email}: {str(e)}")
         return False
 
 async def send_booking_confirmation(
